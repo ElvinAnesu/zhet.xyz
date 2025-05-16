@@ -306,6 +306,35 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Sign in with Google
+  const signInWithGoogle = async (redirectTo = '/exchange') => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}${redirectTo}`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      
+      if (error) throw error;
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      setError(error.message);
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -317,6 +346,7 @@ export function AuthProvider({ children }) {
     resetPassword,
     verifyOtp,
     resendVerification,
+    signInWithGoogle,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
