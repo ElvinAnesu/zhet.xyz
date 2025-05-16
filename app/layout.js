@@ -1,5 +1,6 @@
 import { Poppins, Raleway } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -26,7 +27,9 @@ export default function RootLayout({ children }) {
       <body
         className={`${poppins.variable} ${raleway.variable} antialiased`}
       >
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

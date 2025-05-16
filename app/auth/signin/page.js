@@ -2,32 +2,49 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Signin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isEmailNotConfirmed, setIsEmailNotConfirmed] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const router = useRouter();
+  const { signIn } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+    setIsEmailNotConfirmed(false);
 
     try {
-      // Sign-in logic would go here
-      // This is just a placeholder for now
-      console.log("Sign in with:", email, password);
+      const { success, error } = await signIn(email, password, rememberMe);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!success) {
+        // Check if this is an email confirmation error
+        if (error && error.toLowerCase().includes("email not confirmed")) {
+          setIsEmailNotConfirmed(true);
+          // Store the email in localStorage for the confirm-email page
+          try {
+            localStorage.setItem('userInfo', JSON.stringify({ email }));
+          } catch (err) {
+            console.error('Error storing email in localStorage:', err);
+          }
+          throw new Error("Your email address has not been verified yet.");
+        } else {
+          throw new Error(error || "Invalid email or password. Please try again.");
+        }
+      }
       
       // Redirect to exchange page after successful login
-      window.location.href = "/exchange";
+      router.push("/exchange");
     } catch (err) {
       console.error("Login error:", err);
-      setError("Invalid email or password. Please try again.");
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -36,6 +53,7 @@ export default function Signin() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setError("");
+    setIsEmailNotConfirmed(false);
 
     try {
       // Google sign-in logic would go here
@@ -45,7 +63,7 @@ export default function Signin() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Redirect to exchange page after successful login
-      window.location.href = "/exchange";
+      router.push("/exchange");
     } catch (err) {
       console.error("Google login error:", err);
       setError("Google sign in failed. Please try again.");
@@ -79,6 +97,13 @@ export default function Signin() {
                   <div className="ml-2">
                     <p className="text-xs sm:text-sm text-red-700 dark:text-red-400">
                       {error}
+                      {isEmailNotConfirmed && (
+                        <span className="block mt-1">
+                          <Link href="/auth/confirm-email" className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">
+                            Click here to verify your email
+                          </Link>
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -127,6 +152,8 @@ export default function Signin() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-xs sm:text-sm text-gray-700 dark:text-gray-300">
@@ -144,9 +171,10 @@ export default function Signin() {
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                disabled={isLoading}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
               >
-                Sign in
+                {isLoading ? "Signing in..." : "Sign in"}
               </button>
             </div>
           </form>
@@ -167,7 +195,8 @@ export default function Signin() {
               <div>
                 <button
                   onClick={handleGoogleSignIn}
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600"
+                  disabled={isLoading}
+                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 disabled:opacity-50"
                 >
                   <svg className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
@@ -178,8 +207,8 @@ export default function Signin() {
 
               <div>
                 <button
-                  onClick={() => signInWithFacebook()}
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600"
+                  disabled={isLoading}
+                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 disabled:opacity-50"
                 >
                   <svg className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                     <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />

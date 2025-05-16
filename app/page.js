@@ -1,7 +1,12 @@
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Home() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-slate-900 font-[var(--font-poppins)]">
       {/* Header */}
@@ -10,8 +15,14 @@ export default function Home() {
           <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 font-[var(--font-raleway)]">Zhet</h1>
         </div>
         <div className="flex gap-2">
-          <Link href="/auth/signin" className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base rounded-md border border-indigo-600 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:text-white transition">Login</Link>
-          <Link href="/auth/signup" className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition">Sign Up</Link>
+          {user ? (
+            <Link href="/exchange" className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition">Exchange</Link>
+          ) : (
+            <>
+              <Link href="/auth/signin" className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base rounded-md border border-indigo-600 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:text-white transition">Login</Link>
+              <Link href="/auth/signup" className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition">Sign Up</Link>
+            </>
+          )}
         </div>
       </header>
 
@@ -34,9 +45,15 @@ export default function Home() {
             Connect directly with others to exchange currencies between Zimbabwe and Tanzania, or within Zimbabwe&apos;s dual currency system.
           </p>
           <div className="pt-2 md:pt-4">
-            <Link href="/auth/signup" className="inline-block px-6 py-3 rounded-md bg-indigo-600 text-center text-white hover:bg-indigo-700 transition text-sm sm:text-base">
-              Get Started
-            </Link>
+            {user ? (
+              <Link href="/exchange" className="inline-block px-6 py-3 rounded-md bg-indigo-600 text-center text-white hover:bg-indigo-700 transition text-sm sm:text-base">
+                Exchange
+              </Link>
+            ) : (
+              <Link href="/auth/signup" className="inline-block px-6 py-3 rounded-md bg-indigo-600 text-center text-white hover:bg-indigo-700 transition text-sm sm:text-base">
+                Get Started
+              </Link>
+            )}
           </div>
         </div>
         
@@ -77,9 +94,15 @@ export default function Home() {
           <div className="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl p-5 text-white">
             <h3 className="text-lg font-bold mb-2 font-[var(--font-raleway)]">Exchange Currency Easily</h3>
             <p className="text-sm mb-3 text-indigo-100">Our platform connects you with verified users for secure currency exchanges.</p>
-            <Link href="/auth/signup" className="inline-block w-full py-2.5 bg-white text-indigo-600 font-medium text-center rounded-md hover:bg-indigo-50 transition text-sm">
-              Start Exchanging Now
-            </Link>
+            {user ? (
+              <Link href="/exchange" className="inline-block w-full py-2.5 bg-white text-indigo-600 font-medium text-center rounded-md hover:bg-indigo-50 transition text-sm">
+                Exchange
+              </Link>
+            ) : (
+              <Link href="/auth/signup" className="inline-block w-full py-2.5 bg-white text-indigo-600 font-medium text-center rounded-md hover:bg-indigo-50 transition text-sm">
+                Sign Up Now
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -197,9 +220,15 @@ export default function Home() {
           <p className="text-base md:text-xl text-indigo-100 max-w-2xl mx-auto mb-6 md:mb-8">
             Join thousands of Zimbabweans who are already using Zhet for their currency exchange needs.
           </p>
-          <Link href="/auth/signup" className="inline-block px-6 py-3 md:px-8 md:py-4 bg-white text-indigo-600 font-medium rounded-md hover:bg-indigo-50 transition text-sm md:text-base">
-            Create Your Account
-          </Link>
+          {user ? (
+            <Link href="/exchange" className="inline-block px-6 py-3 md:px-8 md:py-4 bg-white text-indigo-600 font-medium rounded-md hover:bg-indigo-50 transition text-sm md:text-base">
+              Go to Dashboard
+            </Link>
+          ) : (
+            <Link href="/auth/signup" className="inline-block px-6 py-3 md:px-8 md:py-4 bg-white text-indigo-600 font-medium rounded-md hover:bg-indigo-50 transition text-sm md:text-base">
+              Create Your Account
+            </Link>
+          )}
         </div>
       </section>
 

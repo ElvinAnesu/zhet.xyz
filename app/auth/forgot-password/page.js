@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const { resetPassword } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,18 +18,17 @@ export default function ForgotPassword() {
     setSuccess(false);
 
     try {
-      // Password reset logic would go here
-      // This is just a placeholder for now
-      console.log("Password reset for:", email);
+      const { success, error } = await resetPassword(email);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!success) {
+        throw new Error(error || "Failed to send reset link. Please try again.");
+      }
       
       // Show success message
       setSuccess(true);
     } catch (err) {
       console.error("Password reset error:", err);
-      setError("Failed to send reset link. Please try again.");
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -106,9 +107,10 @@ export default function ForgotPassword() {
               <div>
                 <button
                   type="submit"
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  disabled={isLoading}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                 >
-                  Send reset link
+                  {isLoading ? "Sending..." : "Send reset link"}
                 </button>
               </div>
 
