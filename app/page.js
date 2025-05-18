@@ -218,7 +218,7 @@ export default function Home() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-4 md:mb-6 font-[var(--font-raleway)]">Ready to Start Exchanging Currency?</h2>
           <p className="text-base md:text-xl text-indigo-100 max-w-2xl mx-auto mb-6 md:mb-8">
-            Join thousands of Zimbabweans who are already using Zhet for their currency exchange needs.
+            Be part of the pioneers of using Zhet for your currency exchange needs.
           </p>
           {user ? (
             <Link href="/exchange" className="inline-block px-6 py-3 md:px-8 md:py-4 bg-white text-indigo-600 font-medium rounded-md hover:bg-indigo-50 transition text-sm md:text-base">
