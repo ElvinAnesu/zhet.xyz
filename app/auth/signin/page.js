@@ -56,7 +56,12 @@ export default function Signin() {
     setIsEmailNotConfirmed(false);
 
     try {
-      const { success, error } = await signInWithGoogle();
+      // Get the current domain for proper redirection
+      const redirectTo = typeof window !== 'undefined' 
+        ? `${window.location.protocol}//${window.location.host}/exchange`
+        : '/exchange';
+        
+      const { success, error } = await signInWithGoogle(redirectTo);
       
       if (!success) {
         throw new Error(error || "Google sign in failed. Please try again.");

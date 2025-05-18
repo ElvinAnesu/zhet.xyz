@@ -381,13 +381,19 @@ export function AuthProvider({ children }) {
       setLoading(true);
       setError(null);
       
-      // Get current URL origin for the redirectTo
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      // If redirectTo already contains a full URL (http:// or https://), use it directly
+      // Otherwise, append it to the origin
+      let redirectUrl = redirectTo;
+      
+      // Only prefix with origin if it's a relative path
+      if (redirectTo.startsWith('/') && typeof window !== 'undefined') {
+        redirectUrl = `${window.location.origin}${redirectTo}`;
+      }
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}${redirectTo}`,
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
