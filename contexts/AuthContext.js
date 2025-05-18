@@ -5,11 +5,68 @@ import { supabase } from '@/lib/supabase';
 
 const AuthContext = createContext();
 
+// Helper function to generate a username from email
+const generateUsernameFromEmail = (email) => {
+  if (!email) return null;
+  // Extract the part before the @ symbol and remove any non-alphanumeric characters
+  return email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sessionChecked, setSessionChecked] = useState(false);
+
+  // Function to update user profile with a proper username
+  const updateUserProfile = async (userId, email) => {
+    try {
+      // First check if this user already has a profile
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', userId)
+        .single();
+        
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error fetching user profile:', fetchError);
+        return;
+      }
+      
+      // If the profile exists and has a proper username (not the auto-generated one), don't update it
+      if (existingProfile && existingProfile.username && !existingProfile.username.startsWith('user_')) {
+        return;
+      }
+      
+      // Generate username from email
+      const username = generateUsernameFromEmail(email);
+      if (!username) return;
+      
+      // Update the user metadata
+      const { error: updateAuthError } = await supabase.auth.updateUser({
+        data: { username }
+      });
+      
+      if (updateAuthError) {
+        console.error('Error updating auth user data:', updateAuthError);
+      }
+      
+      // Update or insert the profile
+      const { error: upsertError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          username,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+        
+      if (upsertError) {
+        console.error('Error updating profile:', upsertError);
+      }
+    } catch (error) {
+      console.error('Error in updateUserProfile:', error);
+    }
+  };
 
   useEffect(() => {
     // Check active session
@@ -40,6 +97,12 @@ export function AuthProvider({ children }) {
               setUser(refreshData.session.user);
             }
           }
+          
+          // Check if this is a Google user who needs a username update
+          if (session.user.app_metadata?.provider === 'google' || 
+              session.user.identities?.some(identity => identity.provider === 'google')) {
+            await updateUserProfile(session.user.id, session.user.email);
+          }
         } else {
           setUser(null);
         }
@@ -59,6 +122,12 @@ export function AuthProvider({ children }) {
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
           setUser(session.user);
+          
+          // Check if this is a Google sign-in and update the profile if needed
+          if (session.user.app_metadata?.provider === 'google' ||
+              session.user.identities?.some(identity => identity.provider === 'google')) {
+            await updateUserProfile(session.user.id, session.user.email);
+          }
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
         } else if (event === 'TOKEN_REFRESHED' && session) {
@@ -312,10 +381,13 @@ export function AuthProvider({ children }) {
       setLoading(true);
       setError(null);
       
+      // Get current URL origin for the redirectTo
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}${redirectTo}`,
+          redirectTo: `${origin}${redirectTo}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
